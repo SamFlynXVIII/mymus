@@ -1,0 +1,15 @@
+*{
+    margin: 0;
+    padding: 0;
+    outline: 0;
+    font-family: 'Open Sans', sans-serif;
+}
+body{
+    height: 100vh;
+    background-color: #dbc7b3;
+    position: absolute;
+    width: 1164px;
+    height: 91px;
+    left: 65px;
+    top: 194px;
+}
