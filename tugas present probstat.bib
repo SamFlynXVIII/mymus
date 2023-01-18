@@ -1,0 +1,190 @@
+#STOREDPROCEDURE
+    Didalam database terdapat istilah penting yang bernama stored procedure. 
+    Stored procedure ini merupakan suatu blok program yang dapat dipanggil secara berulang-ulang dalam bentuk script.
+    Dengan menggunakan stored procedure maka seluruh aplikasi akan terdistribusi dan ketika mengeksekusi satu perintah CALL 
+    aplikasi dapat langsung membentuk sejumlah task yang dapat berjalan di dalam server.
+     Lebih jelasnya, stored procedure ini akan mempersingkat pemrograman karena programmer hanya perlu memanggil 
+     stored procedure dengan parameternya tanpa perlu mengetikkan syntax SQL yang panjang. 
+
+     create database obatku;
+
+     use obatku;
+
+     create table tb_barang (
+     id_barang int(11) not null,
+     nama_barang varchar(100) not null,
+     stok int(11),
+     harga_barang int(11),
+     primary key (id_barang));
+
+    setelah itu lakukan pengecekan tabel barang yang sudah di buat:
+     desc tb_barang;
+
+     karena table masih kosong maka kita akan mengisi tabel terlebih dahulu dengan berikut:
+
+     insert into tb_barang values(1,"Promaag",0,5000);
+
+    untuk menampilkan table yang baru di isi:
+     select *from tb_barang;
+
+    stored procedur untuk memanggil isi dalam table:
+
+    delimiter $$
+    create procedure barang()
+    begin
+    select *from tb_barang;
+    end $$
+
+    delimiter ;
+    call barang ;
+
+dan kita akan membuat kembali isi dari tabel barang :
+insert into tb_barang values(2,"Paracetamol",0,3500);
+
+maka kita hannya menggunakan stored procedure di bawah ini:
+    call barang;
+
+    Baik sekian untuk stored procedure yang pertama.
+
+
+
+    #CURSOR
+    CURSOR
+    Pada block PL/SQL kita tidak bisa menampilkan beberapa baris dengan 
+    menggunakan perintah SELECT secara langsung. Untuk mengatasi hal tersebut, 
+    maka kita dapat menggunakan sebuah kursor. Berbeda dengan variabel skalar, 
+    cursor dapat menampung banyak nilai berupa baris atau record. 
+
+    sebelum ke kursor kita membuat tabel terlebih dahulu
+
+    create table tb_penjualan (
+    id_penjualan int(10) not null,
+    id_barang int(10) not null,
+    id_member int(10),
+    stok int(10),
+    total_harga int(10),
+    primary key (id_penjualan));
+
+    create table tb_member (
+    id_member int(10) not null,
+    nama_member varchar(20),
+    primary key(id_member));
+
+    create table report_sale (
+    id_report int(10) not null,
+    id_barang int(10),
+    nama_barang varchar(20),
+    stok_terjual int(10),
+    banyak_trx int(10),
+    income int(10),
+    primary key(id_report));
+
+
+    dan setelah itu mari kita cek semua tabel yang sudah kita buat dan lakukan perintah di bwah:
+   
+    desc report_sale;
+
+    desc tb_penjualan;
+
+    desc tb_member;
+
+    setelah semua table kita cek dan periksa maka kita akan mulai melakukan netode CURSOR yang akan berfungsi untuk mentotal income income per produk
+    pada table penjualan.
+
+    delimiter $$
+    create procedure totalincome (in idbarang int, out income int, out amount int, out quantity int)
+    no sql begin
+    set income := (select sum(total_harga) from tb_penjualan where id_barang=idbarang);
+    set amount := (select count(id_penjualan) from tb_penjualan where id_barang=idbarang);
+    set quantity := (select sum(tb_penjualan.stok) from tb_penjualan where id_barang=idbarang);
+    end $$
+
+    delimiter ;
+
+set income adalah variabel untuk menyimpannya di total harga.
+set amount  select dari id penjualan dan akan di simpan di idbarang sehingga nantinya mempermudah pada cursor.
+begitu juga dengan kuantity yang di mna set penjualan akan menghitung stock dari totalan penjualan
+
+delimiter $$
+create procedure report_sale()
+no sql begin
+declare id int;
+declare nama varchar(20);
+declare selesai int default 0;
+declare recordbarang
+cursor for
+select id_barang, nama_barang from tb_barang order by id_barang;
+declare continue handler for sqlstate '02000' set selesai = 1;
+truncate report_sale;
+open recordbarang;
+while not selesai do
+fetch recordbarang into id, nama;
+if not selesai then
+call totalincome(id, @income, @amount, @quantity);
+if @income is null then set @income =0;
+end if;
+if @amount is null then set @amount =0;
+end if;
+if @quantity is null then
+set @quantity =0;
+end if;
+insert into report_sale (id_barang, nama_barang, banyak_trx, stok_terjual, income)
+values (id, nama, @amount, @quantity, @income);
+end if;
+end while;
+close recordbarang;
+end $$
+
+
+delimiter ;
+select *from report_sale;
+
+desc tb_penjualan;
+
+select *from tb_member;
+
+insert into tb_member values(1,"ASEP");
+
+dan kita dapat mengisi table kosng yang ada pada table penjualn
+ dan mari kita isi table penjualan.
+
+ select *from tb_penjualan;
+
+select *from tb_barang;
+ setelah itu kita menambah isi dari table member yaitu 
+ insert into tb_member values(2, "AGUS");
+
+
+
+ insert into tb_penjualan values(1, 1, 1, 10, 50000);
+ insert into tb_penjualan values(2, 2, 1, 2, 7000);
+  insert into tb_penjualan values(3, 1, 2, 5, 25000);
+  insert into tb_penjualan values(5, 3, 6 , 7,100000);
+
+    kita lakukan pengecekan pada report_sale;
+    yaitu select *from report_sale;
+
+    bahwa tabel report_sale masih benar benar kosong.
+
+setelah itu kitalakukan 
+    call report_sale;
+    
+    yang di mana query ini akan menunjukkan cursor yang saya buat di atas benar benar kosong atau belum terisi
+
+kita akan memangggil prosedur yang berisikan kursor yang sudah di buat tadi.
+kursor yang sudah di buat tadi akan memasukkan datanya di tabel report sale.
+setelah itu kitalakukan 
+    call report_sale;
+    setelah itu untuk melakukan pengujian dengan 
+    menambahkan 
+    insert into tb_penjualan values(4, 2, 1, 8, 28000);
+
+
+
+    #TRIGGER
+    TRIGGER adalah kumpulan kode SQL yang berjalan secara otomatis untuk mengeksekusi perintah INSERT, UPDATE, DELETE.
+    Biasanya TRIGGER akan dijalankan sebelum atau sesudah proses INSERT, UPDATE, DELETE (Perintah DML) Bahasa Manipulasi Data 
+    (Data Manipulation laguage/ DML).
+
+
+
